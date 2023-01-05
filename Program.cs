@@ -10,6 +10,7 @@ using AutofacTutorial.Interface;
 
 namespace AutofacTutorial
 {
+    //Домашняя работа #6 "Знакомство с autofac"
     internal class Program
     {
         private static IHost _host;
