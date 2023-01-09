@@ -7,26 +7,57 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using AutofacTutorial.Interface;
+using AutofacTutorial.Services.Impl;
+using AutofacTutorial.Models.Reports;
+using AutofacTutorial.Services;
+using AutofacTutorial.Extentions;
 
 namespace AutofacTutorial
 {
+    //Домашняя работа #6 "Знакомство с autofac"
     internal class Program
     {
-        private static IHost _host;
+        private static WebApplication? _app;
 
-        public static IHost Hosting => _host ??= CreateHostBuilder(Environment.GetCommandLineArgs()).Build();
-        
-        public static IHostBuilder CreateHostBuilder(string[] args)
+        public static WebApplication App // => _host ??= CreateHostBuilder(Environment.GetCommandLineArgs()).Build();
         {
-            return Host
-                .CreateDefaultBuilder(args)
+            get
+            {
+                if(_app == null)
+                {
+                    _app = CreateHostBuilder(Environment.GetCommandLineArgs()).Build();
+                    if (!_app.Environment.IsDevelopment())
+                    {
+                        _app.UseExceptionHandler("/Home/Error");
+                    }
+                    _app.UseStaticFiles();
+
+                    _app.UseRouting();
+
+                    _app.UseAuthorization();
+
+                    _app.MapControllerRoute(
+                        name: "default",
+                        pattern: "{controller=Home}/{action=Index}/{id?}");
+                }
+                return _app;
+            }
+        }
+
+        //добавляем пакеты [1]TemplateEngine.Docx
+        public static WebApplicationBuilder CreateHostBuilder(string[] args)
+        {
+            //меняем host на webApplication
+
+            var webAplicationBuilder = WebApplication.CreateBuilder(args);
+            webAplicationBuilder.Host
                 .ConfigureHostConfiguration(options =>
                 options.AddJsonFile("appsettings.json"))
                 .ConfigureAppConfiguration(options =>
                 options
                 .AddJsonFile("appsettings.json")
                 .AddXmlFile("appsettings.xml", true)
-                .AddIniFile("appsettings.ini", true)//булевая переменная указывает на то что файлов может и не быть
+                .AddIniFile("appsettings.ini", true)//булевая переменная указывает на то что файла может и не быть
                 .AddEnvironmentVariables()
                 .AddCommandLine(args))
                 .ConfigureLogging(options =>
@@ -34,10 +65,16 @@ namespace AutofacTutorial
                 .AddConsole()
                 .AddDebug())
                 .ConfigureServices(ConfigureServices);
+
+            return webAplicationBuilder;
         }
 
         private static void ConfigureServices(HostBuilderContext host, IServiceCollection services)
         {
+            #region Register Base Services
+            services.AddControllersWithViews();
+            #endregion
+
             #region Configure EF DBContext Service
             services.AddDbContext<ClientContext>(optionts =>
             {
@@ -46,16 +83,16 @@ namespace AutofacTutorial
             #endregion
         }
 
-        public static IServiceProvider Services => Hosting.Services;
+        public static IServiceProvider Services => App.Services;
 
         public static async Task Main(string[] args)
-        { 
-            var host = Hosting;
-            host.Start();
+        {
+            var host = App;
+            host.Run();
             var serviceScope = Services.CreateScope();
             var service = serviceScope.ServiceProvider;
             var clientDB = service.GetRequiredService<ClientContext>();
-
+            /*
             string? reply = "no";
             do
             {
@@ -67,100 +104,110 @@ namespace AutofacTutorial
                     FillOrder(clientDB);
                 Console.WriteLine("Продолжить работу? (yes/no)");
                 reply = Console.ReadLine();
-            } while (reply == "yes");             
+            } while (reply == "yes");
+
+            Console.WriteLine("Сформировать отчет о покупателe и его заказах?");
+            var answerReport = Console.ReadLine();
+            if(answerReport == "no")
+            {
+                Console.WriteLine("Досвидание!");
+                return;
+            }
+
+            Console.Write("Id покупателя: ");
+            int id_client = Convert.ToInt32(Console.ReadLine());
+
+            var cl = clientDB.Clients.FirstOrDefault(client => client.Id == id_client);//выдает ошибку
+
+            ///репорт            
+            var catalog = new Catalog()
+            {
+                Name = "Список товаров",
+                Auther = "Продавец: Александр",
+                CreationDate = DateTime.Now,
+                ClientName = cl.Name,
+                Surname = cl.Surname,
+                Email = cl.Email,
+                Address = cl.Address,
+                Phone = cl.Phone,
+                Age = cl.Age,
+                Orders = from ord in clientDB.Orders
+                         where ord.ClientId == id_client
+                         select ord
+            };
+
+            string templateFile = "Templates/DefaultTemplate.docx";
+
+            IProdactService report = new ProductReportWord(templateFile);
+
+            CreateReport(report, catalog, "Report.docx");
+                        
+            Console.ReadKey(true);
+            */
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="reportGenerator">Объект - генератор отчета</param>
+        /// <param name="catalog">Объект с данным</param>
+        /// <param name="reportFileName">Наименование файла - отчета</param>
+        private static void CreateReport(IProdactService reportGenerator, Catalog catalog, string reportFileName)
+        {
+            reportGenerator.CatalogName = catalog.Name;
+            reportGenerator.CatalogClientName= catalog.ClientName;
+            reportGenerator.CatalogSurname = catalog.Surname;
+            reportGenerator.CatalogAuther = catalog.Auther;
+            reportGenerator.CreationDate = catalog.CreationDate;
+            reportGenerator.CatalogPhone = catalog.Phone;
+            reportGenerator.CatalogAddress = catalog.Address;
+            reportGenerator.CatalogAge = catalog.Age;
+            reportGenerator.CatalogEmail = catalog.Email;
+            reportGenerator.Orders = catalog.Orders.Select(order => (order.Id, order.Name, order.Description, order.Price)).ToList();
+
+            var reportfileInfo = reportGenerator.Create(reportFileName);
+            reportfileInfo.Execute();
         }
 
         public static void FillOrder(ClientContext clientDB)
         {
             Console.WriteLine(
-                "c - create: c [name] [description] [client_id]\n" +
-                "r - remove: r [id]\n" +
-                "up - update: up [id] [name] [description] [client_id]\n" +
-                "get - get: get [id]\n" + 
-                "gAll - get all");
+                "create\t" +
+                "remove\t" +
+                "update\t" +
+                "get\t" +
+                "get all\t");
 
             string answer = Console.ReadLine();
 
             if (string.IsNullOrEmpty(answer))
                 return;
 
-            var words = answer.Split(' ');
-
             using (var consoleManager = new CrudOrder(clientDB))
             {
-                switch (words[0])
+                var consoleOrder = new OrderConsole(consoleManager, clientDB);
+                switch (answer)
                 {
-                    case "c":
-                        if (words.Length != 4)
-                        {
-                            Console.WriteLine("Недостаточно кол-во данных");
-                            break;
-                        }
-
-                        if (consoleManager.Create(new Order()
-                        {
-                            Name = words[1],
-                            Description = words[2],
-                            ClientId = int.TryParse(words[3], out int result_c) ? result_c : 0
-                        }))
-                            Console.WriteLine("Операция успешно выполнена!");
-                        else
-                            Console.WriteLine("Операция не выполнена!");
+                    case "create":
+                        consoleOrder.Create();
                         break;
-                    case "r":
-                        if (words.Length != 2 || !int.TryParse(words[1], out int result_r))
-                            break;
-                        if (consoleManager.Delete(result_r))
-                            Console.WriteLine("Операция успешно выполнена!");
-                        else
-                            Console.WriteLine("Операция не выполнена!");
+                    case "remove":
+                        consoleOrder.Remove();
                         break;
-                    case "up":
-                        if (words.Length != 4)
-                        {
-                            Console.WriteLine("Недостаточно кол-во данных");
-                            break;
-                        }
-
-                        if (consoleManager.Update(new Order()
-                        {
-                            Name = words[1],
-                            Description = words[2],
-                            ClientId = int.TryParse(words[4], out int result_up) ? result_up : 0
-                        }))
-                            Console.WriteLine("Обновление прошло успешно!");
-                        else
-                            Console.WriteLine("Не удалось обновить данные!");
+                    case "update":
+                        consoleOrder.Update();
                         break;
                     case "get":
-                        if (words.Length != 2 || !int.TryParse(words[1], out int result_g))
-                            break;
-                        var order = consoleManager.Get(result_g);
-                        if (order != null)
-                        {
-                            Console.WriteLine($"{order.Name} {order.Description} {order.ClientId}");
-                        }
-                        else
-                            Console.WriteLine("Пользователь не найден!");
+                        consoleOrder.Get();
                         break;
-                    case "gAll":
-                        if (words.Length != 1)
-                            break;
-                        var orders = consoleManager.GetAll();
-                        if (orders == null)
-                            Console.WriteLine("Нет данных в бд");
-                        else
-                        {
-                            foreach (var or in orders)
-                            {
-                                Console.WriteLine($"{or.Id} {or.Name} {or.Description} {or.ClientId}");                                
-                            }                                
-                        }
+                    case "get all":
+                        consoleOrder.GetAll();
                         break;
                     default:
                         Console.WriteLine("unknown command!");
                         break;
                 }
+
             }
 
         }
@@ -168,97 +215,37 @@ namespace AutofacTutorial
         public static void FillClient(ClientContext clientDB)
         {
             Console.WriteLine(
-                "c - create: c [name] [surname] [email] [age]\n" +
-                "r - remove: r [id]\n" +
-                "up - update: up [id] [name] [surname] [email] [age]\n" +
-                "get - get: get [id]\n" +
-                "gAll - get all");
+                "create\t" +
+                "remove\t" +
+                "update\t" +
+                "get\t" +
+                "get all\t");
 
             string answer = Console.ReadLine();
 
             if (string.IsNullOrEmpty(answer))
                 return;
 
-            var words = answer.Split(' ');
-
-            using (var consoleManager = new CrudClient(clientDB))
+            using (var crud = new CrudClient(clientDB))
             {
-                switch (words[0])
+                var consoleClient = new ClientConsole(crud, clientDB);
+
+                switch (answer)
                 {
-                    case "c":
-                        if (words.Length != 5)
-                        {
-                            Console.WriteLine("Недостаточно кол-во данных");
-                            break;
-                        }
-
-                        if (consoleManager.Create(new Client()
-                        {
-                            Name = words[1],
-                            Surname = words[2],
-                            Email = words[3],
-                            Age = int.TryParse(words[4], out int result_c) ? result_c : 18
-                        }))
-                            Console.WriteLine("Операция успешно выполнена!");
-                        else
-                            Console.WriteLine("Операция не выполнена!");
+                    case "create":
+                        consoleClient.Create();
                         break;
-                    case "r":
-                        if (words.Length != 2 || !int.TryParse(words[1], out int result_r))
-                            break;
-                        if (consoleManager.Delete(result_r))
-                            Console.WriteLine("Операция успешно выполнена!");
-                        else
-                            Console.WriteLine("Операция не выполнена!");
+                    case "remove":
+                        consoleClient.Remove();
                         break;
-                    case "up":
-                        if (words.Length != 5)
-                        {
-                            Console.WriteLine("Недостаточно кол-во данных");
-                            break;
-                        }
-
-                        if (consoleManager.Update(new Client()
-                        {
-                            Name = words[1],
-                            Surname = words[2],
-                            Email = words[3],
-                            Age = int.TryParse(words[4], out int result_up) ? result_up : 18
-                        }))
-                            Console.WriteLine("Обновление прошло успешно!");
-                        else
-                            Console.WriteLine("Не удалось обновить данные!");
+                    case "update":
+                        consoleClient.Update();
                         break;
                     case "get":
-                        if (words.Length != 2 || !int.TryParse(words[1], out int result_g))
-                            break;
-                        var client = consoleManager.Get(result_g);
-                        if (client != null)
-                        {
-                            Console.WriteLine($"{client.Name} {client.Surname} {client.Email} {client.Age}");
-                            var orders = clientDB.Orders.Where(c => c.ClientId == client.Id).ToList();
-                            if(orders.Count > 0)
-                            {
-                                foreach(var order in orders) 
-                                {
-                                    Console.WriteLine($"         {order.Name} {order.Description}");
-                                }
-                            }
-                        }
-                        else
-                            Console.WriteLine("Пользователь не найден!");
+                        consoleClient.Get();
                         break;
-                    case "gAll":
-                        if (words.Length != 1)
-                            break;
-                        var clients = consoleManager.GetAll();
-                        if (clients == null)
-                            Console.WriteLine("Нет данных в бд");
-                        else
-                        {
-                            foreach (var cl in clients)
-                                Console.WriteLine($"{cl.Id} {cl.Name} {cl.Surname} {cl.Email} {cl.Age}");
-                        }
+                    case "get all":
+                        consoleClient.GetAll();
                         break;
                     default:
                         Console.WriteLine("unknown command!");

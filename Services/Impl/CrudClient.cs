@@ -7,13 +7,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AutofacTutorial
+namespace AutofacTutorial.Services.Impl
 {
     public class CrudClient : ICrudClient, IDisposable
     {
         private ClientContext _db;
 
-        public CrudClient(ClientContext db) { _db = db; }   
+        public CrudClient(ClientContext db) { _db = db; }
 
         public bool Create(Client entity)
         {
@@ -31,11 +31,11 @@ namespace AutofacTutorial
                 return false;
 
             var client = _db.Clients.FirstOrDefault(client => client.Id == id);
-            if (client!=null)
+            if (client != null)
             {
                 _db.Remove(client);
                 _db.SaveChanges();
-                return true;    
+                return true;
             }
             return false;
         }
@@ -50,19 +50,28 @@ namespace AutofacTutorial
             if (entity == null)
                 return false;
 
-            if (_db.Clients.Any(client =>
-            client.Id != entity.Id))
-                return false;
+            var clientUp = _db.Clients.FirstOrDefault(client => client.Id == entity.Id);
 
-            _db.Update(entity);
-            _db.SaveChanges();
-            return false;
+            if(clientUp != null)
+            {
+                clientUp.Name = entity.Name;
+                clientUp.Surname= entity.Surname;
+                clientUp.Email = entity.Email;
+                clientUp.Address = entity.Address;
+                clientUp.Phone= entity.Phone;
+                clientUp.Age= entity.Age;
+                _db.Update(entity);
+                _db.SaveChanges();
+                return true;
+            }
+            else
+                return false;
         }
 
         public Client Get(int id)
         {
-            if(_db.Clients.Any(c => c.Id== id))
-                    return _db.Clients.FirstOrDefault(client => client.Id == id);
+            if (_db.Clients.Any(c => c.Id == id))
+                return _db.Clients.FirstOrDefault(client => client.Id == id);
             else
                 return null;
         }
