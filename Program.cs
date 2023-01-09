@@ -17,15 +17,40 @@ namespace AutofacTutorial
     //Домашняя работа #6 "Знакомство с autofac"
     internal class Program
     {
-        private static IHost _host;
+        private static WebApplication? _app;
 
-        public static IHost Hosting => _host ??= CreateHostBuilder(Environment.GetCommandLineArgs()).Build();
+        public static WebApplication App // => _host ??= CreateHostBuilder(Environment.GetCommandLineArgs()).Build();
+        {
+            get
+            {
+                if(_app == null)
+                {
+                    _app = CreateHostBuilder(Environment.GetCommandLineArgs()).Build();
+                    if (!_app.Environment.IsDevelopment())
+                    {
+                        _app.UseExceptionHandler("/Home/Error");
+                    }
+                    _app.UseStaticFiles();
+
+                    _app.UseRouting();
+
+                    _app.UseAuthorization();
+
+                    _app.MapControllerRoute(
+                        name: "default",
+                        pattern: "{controller=Home}/{action=Index}/{id?}");
+                }
+                return _app;
+            }
+        }
 
         //добавляем пакеты [1]TemplateEngine.Docx
-        public static IHostBuilder CreateHostBuilder(string[] args)
+        public static WebApplicationBuilder CreateHostBuilder(string[] args)
         {
-            return Host
-                .CreateDefaultBuilder(args)
+            //меняем host на webApplication
+
+            var webAplicationBuilder = WebApplication.CreateBuilder(args);
+            webAplicationBuilder.Host
                 .ConfigureHostConfiguration(options =>
                 options.AddJsonFile("appsettings.json"))
                 .ConfigureAppConfiguration(options =>
@@ -40,10 +65,16 @@ namespace AutofacTutorial
                 .AddConsole()
                 .AddDebug())
                 .ConfigureServices(ConfigureServices);
+
+            return webAplicationBuilder;
         }
 
         private static void ConfigureServices(HostBuilderContext host, IServiceCollection services)
         {
+            #region Register Base Services
+            services.AddControllersWithViews();
+            #endregion
+
             #region Configure EF DBContext Service
             services.AddDbContext<ClientContext>(optionts =>
             {
@@ -52,16 +83,16 @@ namespace AutofacTutorial
             #endregion
         }
 
-        public static IServiceProvider Services => Hosting.Services;
+        public static IServiceProvider Services => App.Services;
 
         public static async Task Main(string[] args)
         {
-            var host = Hosting;
-            host.Start();
+            var host = App;
+            host.Run();
             var serviceScope = Services.CreateScope();
             var service = serviceScope.ServiceProvider;
             var clientDB = service.GetRequiredService<ClientContext>();
-
+            /*
             string? reply = "no";
             do
             {
@@ -112,6 +143,7 @@ namespace AutofacTutorial
             CreateReport(report, catalog, "Report.docx");
                         
             Console.ReadKey(true);
+            */
         }
 
         /// <summary>

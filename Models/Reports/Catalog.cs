@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AutofacTutorial.Models.Reports
+namespace AutofacTutorial.Models.Reports//является некой моделью (бизнес-логика)
 {
     public class Catalog
     {
