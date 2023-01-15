@@ -1,0 +1,21 @@
+﻿<!DOCTYPE html>
+<!--Создаем некий макет, master page-->
+<!--Символ "собачка" переключатает на С#-->
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@ViewBag.Title</title>
+    <partial name="Partial/_Styles"/> <!--добавляем сюда наш файл с ссылками _Styles.cshtml-->
+</head>
+<body>
+
+    <partial name="Partial/_Header"/>
+    
+    <div class="container">
+        @RenderBody()<!--При вызове этого метода будет вставлен index.html-->
+    </div>
+    <partial name="Partial/_Footer"/>
+
+    <partial name="Partial/_Scripts" /> <!--добавляем сюда наш файл с ссылками _Scripts.cshtml-->
+</body>
+</html>
