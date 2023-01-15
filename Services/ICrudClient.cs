@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace AutofacTutorial.Interface
 {
-    internal interface ICrudClient : ICrud<Client>
+    public interface ICrudClient : ICrud<Client>
     {
 
     }

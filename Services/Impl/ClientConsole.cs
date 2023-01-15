@@ -1,4 +1,5 @@
-﻿using ClientsDb;
+﻿
+using ClientsDb;
 using ClientsDb.Entities;
 using DocumentFormat.OpenXml.ExtendedProperties;
 using System;

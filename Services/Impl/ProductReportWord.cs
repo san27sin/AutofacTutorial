@@ -1,4 +1,5 @@
-﻿using DocumentFormat.OpenXml.Spreadsheet;
+﻿using ClientsDb;
+using DocumentFormat.OpenXml.Spreadsheet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,9 +39,9 @@ namespace AutofacTutorial.Services.Impl
         /// 
         /// </summary>
         /// <param name="reportTemplateFile">файл шаблона</param>
-        public ProductReportWord(string reportTemplateFile)
+        public ProductReportWord()
         {
-            _templateFile = new FileInfo(reportTemplateFile);//класс который содержит ссылку на файл
+            _templateFile = new FileInfo("Templates/DefaultTemplate.docx");//класс который содержит ссылку на файл
         }
         #endregion
 
@@ -69,7 +70,7 @@ namespace AutofacTutorial.Services.Impl
                 File.Delete(reportFilePath);
 
             var reportFile = new FileInfo(reportFilePath);
-            reportFile.Delete();
+            //reportFile.Delete();
             _templateFile.CopyTo(reportFile.FullName);
 
             var rows = Orders.Select(order => new TableRowContent(new List<FieldContent> {

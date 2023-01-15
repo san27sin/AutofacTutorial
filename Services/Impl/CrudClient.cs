@@ -17,12 +17,14 @@ namespace AutofacTutorial.Services.Impl
 
         public bool Create(Client entity)
         {
+
             if (entity == null)
                 return false;
 
             _db.Add(entity);
             _db.SaveChanges();
             return true;
+            
         }
 
         public bool Delete(int id)
@@ -60,7 +62,7 @@ namespace AutofacTutorial.Services.Impl
                 clientUp.Address = entity.Address;
                 clientUp.Phone= entity.Phone;
                 clientUp.Age= entity.Age;
-                _db.Update(entity);
+                _db.Update(clientUp);
                 _db.SaveChanges();
                 return true;
             }
