@@ -1,0 +1,60 @@
+﻿@model ClientsOrdersViewModel
+
+@{
+    ViewBag.Title = "Заказы";
+}
+
+<a sp-controller="Order" asp-action="Create" asp-route-id="@Model.ClientId">
+    <i class="btn btn-info">Создать</i>
+</a>
+
+
+@{
+     if (Model.Orders.Any())
+    {
+        <table class="table">
+            <thead>
+                <!--Table head-->
+                <tr>
+                    <th></th>
+                    <th>Номер</th>
+                    <th>Название</th>
+                    <th>Цена</th>
+                    <th>Описание</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model.Orders)
+                {
+                    <tr>
+                        <td>
+                            <a asp-action="AskToDelete" asp-route-id="@order.Id" class="text-danger">
+                                <i class="fa fa-trash-alt"></i><!--fa fa-trash абривиатура нашего стиля, эконка--->
+                            </a>
+                        </td>                        
+                        <td>@order.Id</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@order.Id">@order.Name</a><!--asp-action позволяет нам перейти на соответствующий обработчик(метод)-->
+                        </td>
+                        <td>@order.Price</td>
+                        <td>@order.Description</td>
+                        <td>
+                            <a sp-controller="Order" asp-action="Edit" asp-route-id="@order.Id" data-toggle="tooltip" data-placement="top" title="Редактировать заказ">
+                                <i class="fa fa-file-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>Заказов пока нет</p>
+    }
+
+    <div>
+            <a asp-controller = "Client" asp-action="Index">Обратно к спискам клиентов</a>
+    </div>
+}

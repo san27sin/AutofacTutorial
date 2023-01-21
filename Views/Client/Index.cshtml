@@ -1,0 +1,70 @@
+﻿@model IEnumerable<ClientViewModel>
+
+@{
+    ViewBag.Title = "Клиенты";
+}
+
+<a class="btn btn-success" asp-action="Create">Создать</a>
+
+@{
+     if (Model.Any())//подумать как связать БД с этим блоком
+    {
+        <table class="table">
+            <thead>
+                <!--Table head-->
+                <tr>
+                    <th></th>
+                    <th>Id</th>
+                    <th>Имя</th>
+                    <th>Фамилия</th>
+                    <th>Email</th>
+                    <th>Адрес</th>
+                    <th>Возраст</th>
+                    <th>Телефон</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var client in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-action="AskToDelete" asp-route-id="@client.Id" class="text-danger">
+                                <i class="fa fa-trash-alt"></i><!--fa fa-trash абривиатура нашего стиля, эконка--->
+                            </a>
+                        </td>
+                        <td>@client.Id</td>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@client.Id">@client.Name</a><!--asp-action позволяет нам перейти на соответствующий обработчик(метод)-->
+                        </td>
+                        <td>@client.Surname</td>
+                        <td>@client.Email</td>
+                        <td>@client.Address</td>
+                        <td>@client.Age</td>
+                        <td>@client.Phone</td>
+                        <td>
+                            <a asp-controller="Client" asp-action="Edit" asp-route-id="@client.Id" data-toggle="tooltip" data-placement="top" title="Редактировать клиента">
+                                <i class="fa fa-user-edit"></i>
+                            </a>
+                        </td>
+                        <td>
+                            <a asp-controller="Report" asp-action="Create" asp-route-id="@client.Id">
+                                <i class="fa-regular fa-file-word" data-toggle="tooltip" data-placement="top" title="Сформировать отчет"></i>
+                            </a>
+                        </td>
+
+                        <td>
+                            <a asp-controller="Order" asp-action="Index" asp-route-id="@client.Id">
+                                <i class="btn btn-outline-info">Заказы</i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>Сотрудников пока нет</p>
+    }
+}
