@@ -1,7 +1,4 @@
-﻿
-using Autofac;
-using ClientsDb;
-using ClientsDb.Entities;
+﻿using Autofac;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +9,10 @@ using AutofacTutorial.Services.Impl;
 using AutofacTutorial.Models.Reports;
 using AutofacTutorial.Services;
 using AutofacTutorial.Extentions;
+using AutofacTutorial.ViewModels;
+using ClientsDb;
+using ClientsDb.Entities;
+using AutofacTutorial.Mapper;
 
 namespace AutofacTutorial
 {
@@ -30,11 +31,12 @@ namespace AutofacTutorial
             }));
 
             builder.Services.AddScoped<ICrudClient, CrudClient>();
+            builder.Services.AddScoped<ICrudOrder, CrudOrder>();
             builder.Services.AddScoped<Catalog>();
             builder.Services.AddScoped<IProdactService, ProductReportWord>();
             builder.Services.AddScoped<IReport,Report>();
             builder.Services.AddControllersWithViews();
-
+            builder.Services.AddAutoMapper(typeof(ClientAppMappingProfile), typeof(OrderAppMappingProfile));
             #endregion
 
             //дальше идет конфигурирования обработки наших запросов

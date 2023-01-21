@@ -7,6 +7,6 @@ namespace AutofacTutorial.Controllers
         public IActionResult Index()
         {
             return View();
-        }
+        }        
     }
 }

@@ -1,4 +1,4 @@
-﻿@model Client
+﻿@model ClientViewModel
 
 @{
     ViewData["Title"] = "Редактирование сотрудника";
@@ -63,5 +63,8 @@
     <div>
         <a asp-action="Index">Back to List</a>
     </div>
-
 </div>
+
+@section Scripts{
+    <partial name="Partial/_ValidationScripts" />
+}

@@ -1,0 +1,43 @@
+﻿@model OrderViewModel
+
+@{
+    ViewData["Title"] = "Детализация по заказу";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Детализация</h4>
+    <hr/>
+
+    <dl class="row">
+        <dt class="col-sm-2">
+            #
+        </dt>
+        <dd class="col-sm-10">
+            @Model.Id
+        </dd>
+        <dt class="col-sm-2">
+            Название
+        </dt>
+        <dd class="col-sm-10">
+            @Model.Name
+        </dd>
+        <dt class="col-sm-2">
+            Цена
+        </dt>
+        <dd class="col-sm-10">
+            @Model.Price
+        </dd>
+        <dt class="col-sm-2">
+            Описание
+        </dt>
+        <dd class="col-sm-10">
+            @Model.Description
+        </dd>
+    </dl>
+
+    <div>
+        <a asp-controller="Order" asp-action="Index" asp-route-id="@Model.ClientId">Back to List</a>
+    </div>
+</div>
